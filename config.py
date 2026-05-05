@@ -12,7 +12,7 @@ class Config:
     
     # Discord配置
     DISCORD_BOT_TOKEN = os.getenv('DISCORD_BOT_TOKEN')
-    DISCORD_CHANNEL_ID = int(os.getenv('DISCORD_CHANNEL_ID', 0))
+    DISCORD_CHANNEL_ID = int(os.getenv('DISCORD_CHANNEL_ID', '0')) if os.getenv('DISCORD_CHANNEL_ID') else 0
     DISCORD_WEBHOOK_URL = os.getenv('DISCORD_WEBHOOK_URL')
     
     # NewsAPI配置
