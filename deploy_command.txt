@@ -1,0 +1,3 @@
+# 在Ubuntu服务器上执行的一键部署命令
+
+curl -fsSL https://raw.githubusercontent.com/Brian7939/tech-news-bot/main/one_click_deploy.sh | sudo bash

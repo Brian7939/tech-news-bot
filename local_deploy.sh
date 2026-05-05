@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# 科技新闻简报服务 - 一键部署脚本
-# 适用于Ubuntu系统，自动完成所有部署步骤
+# 科技新闻简报服务 - 本地文件部署脚本
+# 适用于已上传项目文件的Ubuntu服务器
 
 set -e  # 遇到错误立即退出
 
@@ -46,12 +46,6 @@ check_system() {
     if ! grep -q "Ubuntu" /etc/os-release; then
         log_error "此脚本仅支持Ubuntu系统"
         exit 1
-    fi
-    
-    # 检查架构
-    ARCH=$(uname -m)
-    if [ "$ARCH" != "x86_64" ]; then
-        log_warning "检测到架构: $ARCH，推荐使用x86_64"
     fi
     
     log_success "系统检查通过"
@@ -126,38 +120,21 @@ create_app_directory() {
     log_success "应用目录创建完成: $APP_DIR"
 }
 
-# 下载项目文件
-download_project() {
-    log_info "下载项目文件..."
+# 检查项目文件
+check_project_files() {
+    log_info "检查项目文件..."
     
-    # 从GitHub仓库克隆项目
-    GIT_REPO_URL="https://github.com/Brian7939/tech-news-bot.git"
-    log_info "从GitHub仓库克隆项目..."
+    REQUIRED_FILES=("Dockerfile" "docker-compose.yml" "main.py" "requirements.txt" ".env.example")
     
-    if git clone $GIT_REPO_URL .; then
-        log_success "项目文件下载完成"
-    else
-        log_error "从GitHub克隆失败，尝试手动下载..."
-        
-        # 备选方案：直接下载单个文件
-        BASE_URL="https://raw.githubusercontent.com/Brian7939/tech-news-bot/main"
-        
-        # 下载核心文件
-        wget -O Dockerfile "$BASE_URL/Dockerfile"
-        wget -O docker-compose.yml "$BASE_URL/docker-compose.yml"
-        wget -O main.py "$BASE_URL/main.py"
-        wget -O requirements.txt "$BASE_URL/requirements.txt"
-        wget -O .env.example "$BASE_URL/.env.example"
-        
-        # 下载其他必要文件
-        wget -O config.py "$BASE_URL/config.py"
-        wget -O discord_webhook.py "$BASE_URL/discord_webhook.py"
-        wget -O news_aggregator.py "$BASE_URL/news_aggregator.py"
-        wget -O simple_translator.py "$BASE_URL/simple_translator.py"
-        wget -O health_server.py "$BASE_URL/health_server.py"
-        
-        log_success "项目文件下载完成（使用备选方案）"
-    fi
+    for file in "${REQUIRED_FILES[@]}"; do
+        if [ ! -f "$file" ]; then
+            log_error "缺少必要文件: $file"
+            log_info "请确保所有项目文件都已上传到当前目录"
+            exit 1
+        fi
+    done
+    
+    log_success "项目文件检查通过"
 }
 
 # 配置环境变量
@@ -175,17 +152,11 @@ configure_environment() {
         fi
     fi
     
-    # 检查必需的环境变量
-    REQUIRED_VARS=("DISCORD_WEBHOOK_URL" "NEWS_API_KEY" "TAVILY_API_KEY" "DEEPSEEK_API_KEY")
-    
-    for var in "${REQUIRED_VARS[@]}"; do
-        if ! grep -q "^$var=" .env; then
-            log_warning "环境变量 $var 未配置"
-        fi
-    done
-    
-    log_info "请编辑 .env 文件配置您的API密钥："
-    log_info "nano .env"
+    # 显示需要配置的变量
+    log_info "需要配置以下环境变量："
+    echo "=================================="
+    cat .env.example
+    echo "=================================="
     
     # 询问是否现在配置
     read -p "是否现在配置环境变量？(y/n): " -n 1 -r
@@ -195,6 +166,7 @@ configure_environment() {
         log_success "环境变量配置完成"
     else
         log_warning "请稍后手动配置 .env 文件"
+        log_info "配置命令: nano .env"
     fi
 }
 
@@ -266,7 +238,7 @@ show_deployment_info() {
 # 主函数
 main() {
     echo "=================================="
-    echo "科技新闻简报服务 - 一键部署"
+    echo "科技新闻简报服务 - 本地部署"
     echo "=================================="
     echo
     
@@ -275,28 +247,7 @@ main() {
     install_docker
     install_docker_compose
     create_app_directory
-    
-    # 如果没有提供Git仓库，询问用户
-    if [ -z "$GIT_REPO_URL" ]; then
-        echo "请选择项目文件获取方式："
-        echo "1. 从Git仓库克隆"
-        echo "2. 手动上传（需要先上传文件到/opt/tech-news-bot）"
-        read -p "请选择 (1/2): " -n 1 -r
-        echo
-        
-        if [[ $REPLY =~ ^[1]$ ]]; then
-            read -p "请输入Git仓库URL: " GIT_REPO_URL
-            download_project
-        elif [[ $REPLY =~ ^[2]$ ]]; then
-            log_info "跳过文件下载，使用现有文件"
-        else
-            log_error "无效选择"
-            exit 1
-        fi
-    else
-        download_project
-    fi
-    
+    check_project_files
     configure_environment
     build_and_start
     verify_deployment

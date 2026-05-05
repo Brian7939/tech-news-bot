@@ -1,0 +1,33 @@
+# Git上传命令 - 在Windows项目目录执行
+
+# 第1步：初始化Git仓库
+git init
+
+# 第2步：配置Git用户信息（如果未配置）
+git config user.name "Brian7939"
+git config user.email "your-email@example.com"
+
+# 第3步：添加所有文件
+git add .
+
+# 第4步：提交代码
+git commit -m "Initial commit: 科技新闻简报系统
+
+功能特点：
+- 每天中午12点自动推送新闻简报
+- 支持苹果、AI、LLM三大领域
+- 中文翻译和详细摘要
+- DeepSeek智能分析
+- Docker容器化部署
+- Discord Webhook推送"
+
+# 第5步：添加远程仓库
+git remote add origin https://github.com/Brian7939/tech-news-bot.git
+
+# 第6步：推送到GitHub
+git push -u origin main
+
+# 如果遇到认证问题，可能需要：
+# 1. 在GitHub创建Personal Access Token
+# 2. 使用token替代密码：git push -u origin main
+# 或者使用GitHub CLI：gh repo create tech-news-bot
